@@ -49,16 +49,16 @@ func main() {
 			}
 			fmt.Println("Decoded")
 			fmt.Println("Unzipping")
-			//		err = unzipSource(pack.Name()+".zip", pack.Name())
-			//	if err != nil {
-			//			fmt.Println("unable to unzip pack")
-			//		return
-			//	}
-			//	err = os.Remove(pack.Name() + ".zip")
-			//	if err != nil {
-			//			fmt.Println("unable to remove zip file")
-			//		return
-			//	}
+			err = unzipSource(pack.Name()+".zip", pack.Name())
+			if err != nil {
+				fmt.Println("unable to unzip pack")
+				return
+			}
+			err = os.Remove(pack.Name() + ".zip")
+			if err != nil {
+				fmt.Println("unable to remove zip file")
+				return
+			}
 			fmt.Println("Unzipped")
 		} else {
 			file, err := os.Create(pack.Name() + ".zip")
@@ -87,20 +87,17 @@ func main() {
 }
 
 func unzipSource(source, destination string) error {
-	// 1. Open the zip file
 	reader, err := zip.OpenReader(source)
 	if err != nil {
 		return err
 	}
 	defer reader.Close()
 
-	// 2. Get the absolute destination path
 	destination, err = filepath.Abs(destination)
 	if err != nil {
 		return err
 	}
 
-	// 3. Iterate over zip files inside the archive and unzip each of them
 	for _, f := range reader.File {
 		err := unzipFile(f, destination)
 		if err != nil {
