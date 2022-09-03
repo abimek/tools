@@ -6,6 +6,7 @@ import (
 	"crypto/aes"
 	"encoding/json"
 	"io"
+	"log"
 	"os"
 )
 
@@ -77,9 +78,12 @@ func decrypt_pack(pack_zip []byte, filename, key string) error {
 		}
 	}
 
-	// copy and decrypt all content
 	for _, entry := range content.Content {
-		ff, _ := z.Open(entry.Path)
+		ff, err := z.Open(entry.Path)
+		if err != nil {
+			log.Print(err.Error())
+			continue
+		}
 		buf, _ := io.ReadAll(ff)
 		if entry.Key != "" {
 			buf, _ = cfb_decrypt(buf, []byte(entry.Key))

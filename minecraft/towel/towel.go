@@ -2,29 +2,62 @@ package main
 
 import (
 	"archive/zip"
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"github.com/abimek/tools/minecraft/mctoken/api"
+	"github.com/akamensky/argparse"
 	"github.com/sandertv/gophertunnel/minecraft"
 	"github.com/sandertv/gophertunnel/minecraft/auth"
+	"golang.org/x/oauth2"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
+	"os/signal"
 	"path/filepath"
+	"reflect"
 	"strings"
+	"syscall"
+	"unsafe"
 )
+
+const MINECRAFT_TOKEN = "minecraft_token"
 
 func main() {
 	if len(os.Args) == 1 {
 		fmt.Println("towel <address:port>")
 		return
 	}
+
+	parser := argparse.NewParser("towel", "Minecraft pack decryption")
+	identifier := parser.String("i", "identifier", &argparse.Options{
+		Required: false,
+		Help:     "The token identifier used within the environment variables",
+		Default:  api.DefaultToken,
+	})
+	address := parser.String("a", "address", &argparse.Options{
+		Required: true,
+		Help:     "The minecraft server to get packs from",
+		Default:  nil,
+	})
+	err := parser.Parse(os.Args)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
 	fmt.Println("Running Towel v1.0.0...")
+
+	src, err := api.GetTokenSource(*identifier)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
 	dialer := minecraft.Dialer{
-		TokenSource: auth.TokenSource,
+		TokenSource: *src,
 	}
 
-	address := os.Args[1]
-
-	conn, err := dialer.Dial("raknet", address)
+	conn, err := dialer.Dial("raknet", *address)
 	if err != nil {
 		panic(err)
 	}
@@ -36,8 +69,16 @@ func main() {
 	for _, pack := range conn.ResourcePacks() {
 		fmt.Printf("Getting Resource Pack: %s", pack.Name())
 		fmt.Println("...")
-
-		buff, err := ioutil.ReadAll(pack.Content)
+		temp := reflect.ValueOf(pack).Elem()
+		rf := temp.FieldByName("content")
+		rf = reflect.NewAt(rf.Type(), unsafe.Pointer(rf.UnsafeAddr())).Elem()
+		contentVal := rf.Interface()
+		content, ok := contentVal.(*bytes.Reader)
+		if !ok {
+			fmt.Println("unable to reflect pack.Content")
+			return
+		}
+		buff, err := ioutil.ReadAll(content)
 		if err != nil {
 			panic("error reading pack content")
 		}
@@ -66,13 +107,14 @@ func main() {
 				fmt.Println("Error getting pack")
 				return
 			}
-			_, err = pack.Content.WriteTo(file)
+			_, err = (content).WriteTo(file)
 			if err != nil {
 				fmt.Println("error writing pack")
 				return
 			}
 			err = unzipSource(pack.Name()+".zip", pack.Name())
 			if err != nil {
+				log.Print(err.Error())
 				fmt.Println("unable to unzip pack")
 				return
 			}
@@ -136,4 +178,45 @@ func unzipFile(f *zip.File, destination string) error {
 		return err
 	}
 	return nil
+}
+
+func tokenSource() oauth2.TokenSource {
+	check := func(err error) {
+		if err != nil {
+			panic(err)
+		}
+	}
+	token := new(oauth2.Token)
+	tokenData := []byte(os.Getenv(MINECRAFT_TOKEN))
+	if len(tokenData) != 0 {
+		_ = json.Unmarshal(tokenData, token)
+	} else {
+		tokens, err := auth.RequestLiveToken()
+		check(err)
+		token = tokens
+	}
+	src := auth.RefreshTokenSource(token)
+	_, err := src.Token()
+	if err != nil {
+		// The cached refresh token expired and can no longer be used to obtain a new token. We require the
+		// user to log in again and use that token instead.
+		token, err = auth.RequestLiveToken()
+		check(err)
+		src = auth.RefreshTokenSource(token)
+	}
+	go func() {
+		c := make(chan os.Signal, 3)
+		signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
+		<-c
+
+		tok, _ := src.Token()
+		b, _ := json.Marshal(tok)
+		err = os.Setenv(MINECRAFT_TOKEN, string(b))
+		if err != nil {
+			fmt.Printf("Error setting env variable: %s", MINECRAFT_TOKEN)
+			return
+		}
+		os.Exit(0)
+	}()
+	return src
 }
