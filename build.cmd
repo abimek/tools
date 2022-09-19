@@ -19,7 +19,7 @@ echo off
 :: Building Mctoken
 if "%BUILD_MCTOKEN%"=="true" (
     cd %~dp0minecraft\mctoken
-    go build mctoken.go
+    go build .
     move %~dp0\minecraft\mctoken\mctoken.exe "C:\bin"
     cd ..\..
 )
@@ -29,7 +29,7 @@ echo off
 :: Building Towel
 if "%BUILD_TOWEL%"=="true" (
     cd %~dp0minecraft\towel
-    go build towel.go decrypt.go
+    go build .
     move %~dp0\minecraft\towel\towel.exe "C:\bin"
     cd ..\..
 )

@@ -17,6 +17,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"syscall"
 	"unsafe"
 )
@@ -67,7 +68,11 @@ func main() {
 	}
 	for _, pack := range conn.ResourcePacks() {
 		fmt.Println("pack content key: ", pack.ContentKey())
-		fmt.Printf("Getting Resource Pack: %s", pack.Name())
+		z := pack.Name() + ".zip"
+		z = strings.Replace(z, ":", "", -1)
+		z = strings.Replace(z, "/", "\\", -1)
+		z = strings.Replace(z, " ", "", -1)
+		fmt.Printf("Getting Resource Pack: %s", z)
 		fmt.Println("...")
 		temp := reflect.ValueOf(pack).Elem()
 		rf := temp.FieldByName("content")
@@ -82,43 +87,43 @@ func main() {
 		if err != nil {
 			panic("error reading pack content")
 		}
-		if pack.Encrypted() {
+		if pack.Encrypted() || pack.ContentKey() != "" {
 			fmt.Println("Decoding...")
-			err = decrypt_pack(buff, pack.Name()+".zip", pack.ContentKey())
+			err = decryptPack(buff, z, pack.ContentKey())
 			if err != nil {
 				panic(fmt.Sprintf("error converting pack, error: %s", err))
 			}
 			fmt.Println("Decoded")
 			fmt.Println("Unzipping")
-			err = unzipSource(pack.Name()+".zip", pack.Name())
+			err = unzipSource(z, strings.Replace(z, ".zip", "", -1))
 			if err != nil {
 				fmt.Println("unable to unzip pack", err)
 				return
 			}
-			err = os.Remove(pack.Name() + ".zip")
+			err = os.Remove(z)
 			if err != nil {
 				fmt.Println("unable to remove zip file")
 				return
 			}
 			fmt.Println("Unzipped")
 		} else {
-			file, err := os.Create(pack.Name() + ".zip")
+			file, err := os.Create(z)
 			if err != nil {
 				fmt.Println("Error getting pack")
 				return
 			}
-			_, err = (content).WriteTo(file)
+			_, err = content.WriteTo(file)
 			if err != nil {
 				fmt.Println("error writing pack")
 				return
 			}
-			err = unzipSource(pack.Name()+".zip", pack.Name())
+			err = unzipSource(z, strings.Replace(z, ".zip", "", -1))
 			if err != nil {
 				log.Print(err.Error())
 				fmt.Println("unable to unzip pack")
 				continue
 			}
-			err = os.Remove(pack.Name() + ".zip")
+			err = os.Remove(z)
 			if err != nil {
 				fmt.Println("unable to remove zip file")
 				return
