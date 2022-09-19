@@ -106,7 +106,7 @@ func main() {
 				return
 			}
 			fmt.Println("Unzipped")
-		} else {
+		} else if content.Len() != 0 {
 			file, err := os.Create(z)
 			if err != nil {
 				fmt.Println("Error getting pack")
@@ -128,6 +128,8 @@ func main() {
 				fmt.Println("unable to remove zip file")
 				return
 			}
+		} else if content.Len() == 0 {
+			fmt.Printf("No content was found in pack %s, so it is being skipped.\n", z)
 		}
 	}
 	fmt.Println("Towel has run successfully!")
