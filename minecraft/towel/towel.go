@@ -67,6 +67,7 @@ func main() {
 		panic(err)
 	}
 	for _, pack := range conn.ResourcePacks() {
+		fmt.Println("pack content key: ", pack.ContentKey())
 		fmt.Printf("Getting Resource Pack: %s", pack.Name())
 		fmt.Println("...")
 		temp := reflect.ValueOf(pack).Elem()
@@ -116,7 +117,7 @@ func main() {
 			if err != nil {
 				log.Print(err.Error())
 				fmt.Println("unable to unzip pack")
-				return
+				continue
 			}
 			err = os.Remove(pack.Name() + ".zip")
 			if err != nil {
