@@ -22,7 +22,7 @@ require (
 	github.com/pelletier/go-toml v1.9.4 // indirect
 	github.com/rogpeppe/go-internal v1.3.0 // indirect
 	github.com/sandertv/go-raknet v1.11.1 // indirect
-	github.com/sandertv/gophertunnel v1.24.5 // indirect
+	github.com/sandertv/gophertunnel v1.23.0 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4 // indirect
