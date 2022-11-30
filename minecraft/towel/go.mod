@@ -7,7 +7,7 @@ replace github.com/abimek/tools/minecraft/mctoken => ../mctoken
 require (
 	github.com/abimek/tools/minecraft/mctoken v1.0.0
 	github.com/akamensky/argparse v1.3.3
-	github.com/sandertv/gophertunnel v1.24.6
+	github.com/sandertv/gophertunnel v1.26.0
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
 )
 
@@ -15,11 +15,12 @@ require (
 	github.com/df-mc/atomic v1.10.0 // indirect
 	github.com/go-gl/mathgl v1.0.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/go-cmp v0.5.8 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/klauspost/compress v1.15.1 // indirect
 	github.com/muhammadmuzzammil1998/jsonc v1.0.0 // indirect
-	github.com/sandertv/go-raknet v1.11.1 // indirect
+	github.com/sandertv/go-raknet v1.12.0 // indirect
 	github.com/stretchr/testify v1.7.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4 // indirect
